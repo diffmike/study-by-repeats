@@ -1,3 +1,7 @@
 config:
   aws:profile: daws
   aws:region: eu-west-1
+  studyAndRepeat:DB_PASSWORD:
+    secure: AAABAA8FjmBtPiy/Ae1//hEZeWFb//TvIg1SB2Kkrh8mjIy3wB7ULA==
+  studyAndRepeat:TG_TOKEN:
+    secure: AAABAC/YDB0gfcueRst66Yau2WAlrWGJHxqnJjGz5lCxd9ZQlyMvg5V+gzx2DkSUOqJl7MXkQuZyMcmC13hzE3nX4ni21uypSpqgxAq5

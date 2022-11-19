@@ -3,9 +3,12 @@ package main
 import (
 	"github.com/pulumi/pulumi-aws/sdk/v5/go/aws"
 	"github.com/pulumi/pulumi-aws/sdk/v5/go/aws/apigateway"
+	"github.com/pulumi/pulumi-aws/sdk/v5/go/aws/ec2"
 	"github.com/pulumi/pulumi-aws/sdk/v5/go/aws/iam"
 	"github.com/pulumi/pulumi-aws/sdk/v5/go/aws/lambda"
+	"github.com/pulumi/pulumi-aws/sdk/v5/go/aws/rds"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
+	"github.com/pulumi/pulumi/sdk/v3/go/pulumi/config"
 )
 
 func main() {
@@ -52,25 +55,88 @@ func main() {
                 }]
             }`),
 		})
-
-		args := &lambda.FunctionArgs{
-			Handler: pulumi.String("handler"),
-			Role:    role.Arn,
-			Runtime: pulumi.String("go1.x"),
-			Code:    pulumi.NewFileArchive("./handler/handler.zip"),
+		if err != nil {
+			return err
 		}
+
+		networkPolicy, err := iam.NewRolePolicy(ctx, "network-policy", &iam.RolePolicyArgs{
+			Role: role.Name,
+			Policy: pulumi.String(`{
+                "Version": "2012-10-17",
+                "Statement": [{
+					"Effect": "Allow",
+					"Action": [
+						"ec2:CreateNetworkInterface",
+						"ec2:CreateNetworkInterfacePermission",
+						"ec2:DescribeNetworkInterfaces",
+						"ec2:DeleteNetworkInterface"
+					],
+					"Resource": "*"
+                }]
+            }`),
+		})
+		if err != nil {
+			return err
+		}
+
+		c := config.New(ctx, "")
+
+		rdsSg, err := ec2.NewSecurityGroup(ctx, "study-and-repeat-rds", &ec2.SecurityGroupArgs{
+			Ingress: ec2.SecurityGroupIngressArray{
+				ec2.SecurityGroupIngressArgs{
+					Protocol:   pulumi.String("tcp"),
+					FromPort:   pulumi.Int(5432),
+					ToPort:     pulumi.Int(5432),
+					CidrBlocks: pulumi.StringArray{pulumi.String("0.0.0.0/0")},
+				},
+			},
+		})
+		if err != nil {
+			return err
+		}
+
+		db, err := rds.NewInstance(ctx, "study-and-repeat", &rds.InstanceArgs{
+			AllocatedStorage:    pulumi.Int(20),
+			Engine:              pulumi.String("postgres"),
+			EngineVersion:       pulumi.String("14.4"),
+			InstanceClass:       pulumi.String("db.t3.micro"),
+			DbName:              pulumi.String("studyAndRepeat"),
+			Password:            c.RequireSecret("DB_PASSWORD"),
+			SkipFinalSnapshot:   pulumi.Bool(true),
+			Username:            pulumi.String("root"),
+			PubliclyAccessible:  pulumi.Bool(true),
+			VpcSecurityGroupIds: pulumi.StringArray{rdsSg.ID()},
+		})
+		if err != nil {
+			return err
+		}
+
+		ctx.Export("DB Endpoint", pulumi.Sprintf("%s", db.Endpoint))
 
 		function, err := lambda.NewFunction(
 			ctx,
 			"talkToMe",
-			args,
-			pulumi.DependsOn([]pulumi.Resource{logPolicy}),
+			&lambda.FunctionArgs{
+				Handler: pulumi.String("handler"),
+				Role:    role.Arn,
+				Runtime: pulumi.String("go1.x"),
+				Code:    pulumi.NewFileArchive("./build/handler.zip"),
+				Environment: &lambda.FunctionEnvironmentArgs{
+					Variables: pulumi.StringMap{
+						"TG_TOKEN":    c.RequireSecret("TG_TOKEN"),
+						"DB_PASSWORD": c.RequireSecret("DB_PASSWORD"),
+						"DB_USER":     db.Username,
+						"DB_HOST":     db.Endpoint,
+						"DB_NAME":     db.DbName,
+					},
+				},
+			},
+			pulumi.DependsOn([]pulumi.Resource{logPolicy, networkPolicy, db}),
 		)
 		if err != nil {
 			return err
 		}
 
-		// Create a new API Gateway.
 		gateway, err := apigateway.NewRestApi(ctx, "BotGateway", &apigateway.RestApiArgs{
 			Name:        pulumi.String("BotGateway"),
 			Description: pulumi.String("An API Gateway for the Bot function"),
@@ -149,25 +215,7 @@ func main() {
 			return err
 		}
 
-		ctx.Export("invocation URL", pulumi.Sprintf("https://%s.execute-api.%s.amazonaws.com/dev/{message}", gateway.ID(), region.Name))
-
-		//db, err := rds.NewInstance(ctx, "database", &rds.InstanceArgs{
-		//	AllocatedStorage:   pulumi.Int(10),
-		//	Engine:             pulumi.String("postgree"),
-		//	EngineVersion:      pulumi.String("5.7"),
-		//	InstanceClass:      pulumi.String("db.t3.micro"),
-		//	DbName:             pulumi.String("mydb"),
-		//	ParameterGroupName: pulumi.String("default.mysql5.7"),
-		//	Password:           pulumi.String("foobarbaz"),
-		//	SkipFinalSnapshot:  pulumi.Bool(true),
-		//	Username:           pulumi.String("admin"),
-		//	PubliclyAccessible: pulumi.Bool(true),
-		//})
-		//if err != nil {
-		//	return err
-		//}
-		//
-		//ctx.Export("DB Endpoint", pulumi.Sprintf("%s", db.Endpoint))
+		ctx.Export("Invocation URL", pulumi.Sprintf("https://%s.execute-api.%s.amazonaws.com/dev/{message}", gateway.ID(), region.Name))
 
 		return nil
 	})

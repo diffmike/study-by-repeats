@@ -7,6 +7,7 @@ import (
 	tele "gopkg.in/telebot.v3"
 	"log"
 	"os"
+	"studyAndRepeat/src/database"
 )
 
 func main() {
@@ -16,6 +17,9 @@ func main() {
 		Verbose:     false,
 		Synchronous: true,
 	}
+
+	db := database.New()
+	defer db.Close()
 
 	b, err := tele.NewBot(pref)
 	if err != nil {
