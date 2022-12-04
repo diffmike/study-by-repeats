@@ -8,15 +8,12 @@ import (
 	"log"
 	"os"
 	"studyAndRepeat/src/database"
+	"studyAndRepeat/src/handlers"
 )
 
 func main() {
 
-	pref := tele.Settings{
-		Token:       os.Getenv("TG_TOKEN"),
-		Verbose:     false,
-		Synchronous: true,
-	}
+	pref := tele.Settings{Token: os.Getenv("TG_TOKEN"), Verbose: false, Synchronous: true}
 
 	db := database.New()
 	defer db.Close()
@@ -27,22 +24,17 @@ func main() {
 		return
 	}
 
-	b.Handle("/hello", func(c tele.Context) error {
-		return c.Send("Hello! How are you doing?")
-	})
-
-	b.Handle("/hi", func(c tele.Context) error {
-		return c.Send("Hi there!")
-	})
-
-	b.Handle(tele.OnText, func(c tele.Context) error {
-		return c.Send("For now I don't know how to respond")
-	})
+	b.Handle("/start", handlers.Start(db))
+	b.Handle("/add", handlers.AddCard(db))
+	b.Handle("/delete", handlers.DeleteCard(db))
+	b.Handle("/dictionary", handlers.GetDictionary(db))
+	b.Handle("/hi", func(c tele.Context) error { return c.Send("Hi there!") })
+	b.Handle(tele.OnText, handlers.SetDefinition(db))
 
 	lambda.Start(func(req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 		var u tele.Update
 		if err = json.Unmarshal([]byte(req.Body), &u); err == nil {
-			log.Printf("update text is: %s", u.Message.Text)
+			log.Print(req.Body)
 			b.ProcessUpdate(u)
 			return events.APIGatewayProxyResponse{Body: "processed", StatusCode: 200, IsBase64Encoded: false}, nil
 		}

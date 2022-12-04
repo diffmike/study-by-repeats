@@ -8,7 +8,7 @@ import (
 )
 
 func New() *sql.DB {
-	dbPort := os.Getenv("DB_HOST")
+	dbPort := os.Getenv("DB_PORT")
 	if dbPort == "" {
 		dbPort = "5432"
 	}

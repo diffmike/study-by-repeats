@@ -126,7 +126,7 @@ func main() {
 						"TG_TOKEN":    c.RequireSecret("TG_TOKEN"),
 						"DB_PASSWORD": c.RequireSecret("DB_PASSWORD"),
 						"DB_USER":     db.Username,
-						"DB_HOST":     db.Endpoint,
+						"DB_HOST":     db.Address,
 						"DB_NAME":     db.DbName,
 					},
 				},
