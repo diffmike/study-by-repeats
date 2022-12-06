@@ -4,16 +4,16 @@ import (
 	"database/sql"
 )
 
-func StoreUser(db *sql.DB, uuid int64, username string) (int64, error) {
+func StoreUser(db *sql.DB, tgId int64, username string) (int64, error) {
 	var userId int64
-	err := db.QueryRow("INSERT INTO users (username, uuid) VALUES ($1, $2) RETURNING id", username, uuid).Scan(&userId)
+	err := db.QueryRow("INSERT INTO users (username, tg_id) VALUES ($1, $2) RETURNING id", username, tgId).Scan(&userId)
 
 	return userId, err
 }
 
-func FindUserId(db *sql.DB, uuid int64) (int64, error) {
+func FindUserById(db *sql.DB, tgId int64) (int64, error) {
 	var userId int64
-	err := db.QueryRow("SELECT id FROM users WHERE uuid = $1", uuid).Scan(&userId)
+	err := db.QueryRow("SELECT id FROM users WHERE tg_id = $1", tgId).Scan(&userId)
 	if err == sql.ErrNoRows {
 		return 0, nil
 	}

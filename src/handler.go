@@ -28,6 +28,18 @@ func main() {
 	b.Handle("/add", handlers.AddCard(db))
 	b.Handle("/delete", handlers.DeleteCard(db))
 	b.Handle("/dictionary", handlers.GetDictionary(db))
+
+	showAnswer := tele.Btn{Text: "Show answer", Unique: "answer"}
+	b.Handle("/train", handlers.Train(db, showAnswer))
+	answerAgain := tele.Btn{Text: "Again, < 10min", Unique: "again"}
+	answerHard := tele.Btn{Text: "Hard, 1 day", Unique: "hard"}
+	answerGood := tele.Btn{Text: "Good, 3 days", Unique: "good"}
+	answers := []tele.Btn{answerAgain, answerGood, answerHard}
+	b.Handle(&showAnswer, handlers.ShowAnswer(db, answers))
+
+	b.Handle(&answerAgain, handlers.SaveAnswer(db, 0, showAnswer))
+	b.Handle(&answerHard, handlers.SaveAnswer(db, 24, showAnswer))
+	b.Handle(&answerGood, handlers.SaveAnswer(db, 24*3, showAnswer))
 	b.Handle("/hi", func(c tele.Context) error { return c.Send("Hi there!") })
 	b.Handle(tele.OnText, handlers.SetDefinition(db))
 

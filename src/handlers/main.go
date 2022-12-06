@@ -8,7 +8,7 @@ import (
 
 func Start(db *sql.DB) tele.HandlerFunc {
 	return func(c tele.Context) error {
-		id, err := database.FindUserId(db, c.Sender().ID)
+		id, err := database.FindUserById(db, c.Sender().ID)
 		if err != nil {
 			return err
 		}

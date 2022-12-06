@@ -7,6 +7,7 @@ import (
 	"log"
 	"strings"
 	"studyAndRepeat/src/database"
+	"time"
 )
 
 func AddCard(db *sql.DB) tele.HandlerFunc {
@@ -23,7 +24,7 @@ func AddCard(db *sql.DB) tele.HandlerFunc {
 			return err
 		}
 
-		return c.Send("Nice!\n" + frontText + " was added\nNow write the definition")
+		return c.Send("*"+frontText+"* was added!\nNow write the definition", tele.ModeMarkdown)
 	}
 }
 
@@ -42,7 +43,7 @@ func DeleteCard(db *sql.DB) tele.HandlerFunc {
 			return err
 		}
 
-		return c.Send(frontText + " was deleted")
+		return c.Send("*"+frontText+"* was deleted", tele.ModeMarkdown)
 	}
 }
 
@@ -63,7 +64,7 @@ func SetDefinition(db *sql.DB) tele.HandlerFunc {
 			return err
 		}
 
-		return c.Send("Thank you!\nCard: " + frontText + " - " + backText + " was completed")
+		return c.Send("✅Card: *"+frontText+" - "+backText+"* was completed", tele.ModeMarkdown)
 	}
 }
 
@@ -76,10 +77,19 @@ func GetDictionary(db *sql.DB) tele.HandlerFunc {
 
 		results := []string{}
 		for k, card := range cards {
-			results = append(results, fmt.Sprintf("%d. %s - %s. Created at %s",
-				k+1, card.Front, card.Back, card.CreatedAt.Format("15:04 01-02-2006")))
+			results = append(results, fmt.Sprintf("%d. *%s - %s*. Repeat %s",
+				k+1, card.Front, card.Back.String, readableAfter(card.RepeatAfter)))
 		}
 
-		return c.Send(strings.Join(results, "\n"))
+		return c.Send(strings.Join(results, "\n"), tele.ModeMarkdown)
 	}
+}
+
+func readableAfter(after sql.NullTime) string {
+	if !after.Valid {
+		return "available"
+	}
+
+	out := time.Time{}.Add(after.Time.Sub(time.Now()))
+	return "in " + out.Format("15h 04m")
 }
