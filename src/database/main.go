@@ -7,7 +7,11 @@ import (
 	"os"
 )
 
-func New() *sql.DB {
+type DB struct {
+	*sql.DB
+}
+
+func New() *DB {
 	dbPort := os.Getenv("DB_PORT")
 	if dbPort == "" {
 		dbPort = "5432"
@@ -20,5 +24,5 @@ func New() *sql.DB {
 		panic(err)
 	}
 
-	return db
+	return &DB{db}
 }

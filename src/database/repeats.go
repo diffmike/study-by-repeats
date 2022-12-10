@@ -2,12 +2,12 @@ package database
 
 import "database/sql"
 
-func GenerateSession(db *sql.DB, tgId int64) (sessionId int64, err error) {
+func (db *DB) GenerateSession(tgId int64) (sessionId int64, err error) {
 	err = db.QueryRow("INSERT INTO sessions (tg_id) VALUES ($1) RETURNING id", tgId).Scan(&sessionId)
 	if err != nil {
 		return sessionId, err
 	}
-	cardIds, err := findCardsForNewSession(db, tgId)
+	cardIds, err := db.findCardsForNewSession(tgId)
 	if err != nil {
 		return sessionId, err
 	}
@@ -21,7 +21,7 @@ func GenerateSession(db *sql.DB, tgId int64) (sessionId int64, err error) {
 	return sessionId, nil
 }
 
-func findCardsForNewSession(db *sql.DB, tgId int64) (cardIds []int64, err error) {
+func (db *DB) findCardsForNewSession(tgId int64) (cardIds []int64, err error) {
 	rows, err := db.Query("SELECT id FROM cards WHERE tg_id = $1 AND back IS NOT NULL AND (repeat_after <= NOW() or repeat_after IS NULL) LIMIT 20", tgId)
 	if err == sql.ErrNoRows {
 		return nil, nil
@@ -40,7 +40,7 @@ func findCardsForNewSession(db *sql.DB, tgId int64) (cardIds []int64, err error)
 	return cardIds, rows.Err()
 }
 
-func FindRandomCardToRepeat(db *sql.DB, sessionId int64) (card Card, repeatId int64, err error) {
+func (db *DB) FindRandomCardToRepeat(sessionId int64) (card Card, repeatId int64, err error) {
 	err = db.QueryRow("SELECT c.id, c.front, c.back, r.id FROM cards AS c "+
 		"JOIN repeats AS r ON r.card_id = c.id "+
 		"WHERE (r.repeat_in IS NULL or r.repeat_in = 0) AND r.session_id = $1"+

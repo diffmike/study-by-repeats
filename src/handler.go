@@ -31,10 +31,10 @@ func main() {
 
 	showAnswer := tele.Btn{Text: "Show answer", Unique: "answer"}
 	b.Handle("/train", handlers.Train(db, showAnswer))
-	answerAgain := tele.Btn{Text: "Again, < 10min", Unique: "again"}
-	answerHard := tele.Btn{Text: "Hard, 1 day", Unique: "hard"}
-	answerGood := tele.Btn{Text: "Good, 3 days", Unique: "good"}
-	answers := []tele.Btn{answerAgain, answerGood, answerHard}
+	answerAgain := tele.Btn{Text: "Again, in < 10min", Unique: "again"}
+	answerHard := tele.Btn{Text: "Hard, in 1 day", Unique: "hard"}
+	answerGood := tele.Btn{Text: "Good, in 3 days", Unique: "good"}
+	answers := []tele.Btn{answerAgain, answerHard, answerGood}
 	b.Handle(&showAnswer, handlers.ShowAnswer(db, answers))
 
 	b.Handle(&answerAgain, handlers.SaveAnswer(db, 0, showAnswer))
