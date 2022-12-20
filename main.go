@@ -141,30 +141,30 @@ func main() {
 			Name:        pulumi.String("BotGateway"),
 			Description: pulumi.String("An API Gateway for the Bot function"),
 			Policy: pulumi.String(`{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Action": "sts:AssumeRole",
-      "Principal": {
-        "Service": "lambda.amazonaws.com"
-      },
-      "Effect": "Allow",
-      "Sid": ""
-    },
-    {
-      "Action": "execute-api:Invoke",
-      "Resource": "*",
-      "Principal": "*",
-      "Effect": "Allow",
-      "Sid": ""
-    }
-  ]
-}`)})
+				"Version": "2012-10-17",
+				"Statement": [
+					{
+					    "Action": "sts:AssumeRole",
+					    "Principal": {
+						    "Service": "lambda.amazonaws.com"
+					    },
+					    "Effect": "Allow",
+					    "Sid": ""
+					},
+					{
+					    "Action": "execute-api:Invoke",
+					    "Resource": "*",
+					    "Principal": "*",
+					    "Effect": "Allow",
+					    "Sid": ""
+					}
+				]
+			}`)})
 		if err != nil {
 			return err
 		}
 
-		apiresource, err := apigateway.NewResource(ctx, "BotAPI", &apigateway.ResourceArgs{
+		apiResource, err := apigateway.NewResource(ctx, "BotAPI", &apigateway.ResourceArgs{
 			RestApi:  gateway.ID(),
 			PathPart: pulumi.String("{proxy+}"),
 			ParentId: gateway.RootResourceId,
@@ -177,7 +177,7 @@ func main() {
 			HttpMethod:    pulumi.String("ANY"),
 			Authorization: pulumi.String("NONE"),
 			RestApi:       gateway.ID(),
-			ResourceId:    apiresource.ID(),
+			ResourceId:    apiResource.ID(),
 		})
 		if err != nil {
 			return err
@@ -186,7 +186,7 @@ func main() {
 		_, err = apigateway.NewIntegration(ctx, "LambdaIntegration", &apigateway.IntegrationArgs{
 			HttpMethod:            pulumi.String("ANY"),
 			IntegrationHttpMethod: pulumi.String("POST"),
-			ResourceId:            apiresource.ID(),
+			ResourceId:            apiResource.ID(),
 			RestApi:               gateway.ID(),
 			Type:                  pulumi.String("AWS_PROXY"),
 			Uri:                   function.InvokeArn,
@@ -200,7 +200,7 @@ func main() {
 			Function:  function.Name,
 			Principal: pulumi.String("apigateway.amazonaws.com"),
 			SourceArn: pulumi.Sprintf("arn:aws:execute-api:%s:%s:%s/*/*/*", region.Name, account.AccountId, gateway.ID()),
-		}, pulumi.DependsOn([]pulumi.Resource{apiresource}))
+		}, pulumi.DependsOn([]pulumi.Resource{apiResource}))
 		if err != nil {
 			return err
 		}
@@ -210,7 +210,7 @@ func main() {
 			RestApi:          gateway.ID(),
 			StageDescription: pulumi.String("Development"),
 			StageName:        pulumi.String("dev"),
-		}, pulumi.DependsOn([]pulumi.Resource{apiresource, function, permission}))
+		}, pulumi.DependsOn([]pulumi.Resource{apiResource, function, permission}))
 		if err != nil {
 			return err
 		}
