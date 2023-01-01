@@ -13,7 +13,7 @@ func AddCard(db *database.DB) tele.HandlerFunc {
 			return err
 		}
 
-		return c.Send(result, tele.ModeMarkdown)
+		return c.Send(result, tele.ModeMarkdown, tele.Silent)
 	}
 }
 
@@ -24,7 +24,7 @@ func DeleteCard(db *database.DB) tele.HandlerFunc {
 			return err
 		}
 
-		return c.Send(result, tele.ModeMarkdown)
+		return c.Send(result, tele.ModeMarkdown, tele.Silent)
 	}
 }
 
@@ -35,7 +35,7 @@ func SetDefinition(db *database.DB) tele.HandlerFunc {
 			return err
 		}
 
-		return c.Send(result, tele.ModeMarkdown)
+		return c.Send(result, tele.ModeMarkdown, tele.Silent)
 	}
 }
 
@@ -46,6 +46,6 @@ func GetDictionary(db *database.DB) tele.HandlerFunc {
 			return err
 		}
 
-		return c.Send(result, tele.ModeMarkdown)
+		return c.Send(result, tele.ModeMarkdown, tele.Silent)
 	}
 }

@@ -67,9 +67,9 @@ func GetDictionary(db *database.DB, tgId int64) (string, error) {
 		return "", err
 	}
 
-	results := []string{}
+	var results []string
 	for k, card := range cards {
-		results = append(results, fmt.Sprintf("%d. *%s - %s*. %s",
+		results = append(results, fmt.Sprintf("%d. *%s - %s* 🔁 %s",
 			k+1, card.Front, card.Back.String, readableAfter(card.RepeatAfter)))
 	}
 
@@ -81,10 +81,5 @@ func readableAfter(after sql.NullTime) string {
 		return "Available"
 	}
 
-	duration := after.Time.Sub(time.Now()).Round(time.Minute)
-	hours := duration / time.Hour
-	duration -= hours * time.Hour
-	minutes := duration / time.Minute
-
-	return fmt.Sprintf("In %02dh:%02dm", hours, minutes)
+	return fmt.Sprintf("%s", after.Time.Format("02 Jan 15:04"))
 }

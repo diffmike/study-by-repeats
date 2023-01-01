@@ -13,6 +13,6 @@ func Start(db *database.DB) tele.HandlerFunc {
 			return err
 		}
 
-		return c.Send(result)
+		return c.Send(result, tele.Silent)
 	}
 }

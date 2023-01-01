@@ -38,7 +38,7 @@ CREATE TABLE "public"."repeats"
     "id"         numeric NOT NULL DEFAULT nextval('repeats_id_seq'::regclass),
     "card_id"    numeric,
     "session_id" numeric NOT NULL,
-    "repeat_in"  int4,
+    "repeat_in"  numeric,
     CONSTRAINT "repeats_session_id_fkey" FOREIGN KEY ("session_id") REFERENCES "public"."sessions" ("id") ON DELETE SET NULL ON UPDATE CASCADE,
     CONSTRAINT "repeats_card_id_fkey" FOREIGN KEY ("card_id") REFERENCES "public"."cards" ("id") ON DELETE SET NULL ON UPDATE CASCADE,
     PRIMARY KEY ("id")

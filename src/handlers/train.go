@@ -13,7 +13,7 @@ func Train(db *database.DB, showAnswer tele.Btn) tele.HandlerFunc {
 			return err
 		}
 
-		return c.Send(result, reply)
+		return c.Send(result, reply, tele.Silent)
 	}
 }
 
@@ -24,17 +24,17 @@ func ShowAnswer(db *database.DB, answers []tele.Btn) tele.HandlerFunc {
 			return err
 		}
 
-		return c.Send(result, reply)
+		return c.Send(result, reply, tele.Silent)
 	}
 }
 
-func SaveAnswer(db *database.DB, repeatInHours int8, showAnswer tele.Btn) tele.HandlerFunc {
+func SaveAnswer(db *database.DB, repeatInHours int64, showAnswer tele.Btn) tele.HandlerFunc {
 	return func(c tele.Context) error {
 		result, reply, err := services.SaveAnswer(db, c.Sender().ID, c.Data(), repeatInHours, showAnswer)
 		if err != nil {
 			return err
 		}
 
-		return c.Send(result, reply)
+		return c.Send(result, reply, tele.Silent)
 	}
 }

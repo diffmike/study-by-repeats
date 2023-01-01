@@ -77,7 +77,7 @@ func (db *DB) FindLatestUserCard(tgId int64) (int64, string, error) {
 }
 
 func (db *DB) FindCardById(cardId int64, tgId int64) (card Card, err error) {
-	query := "SELECT id, front, back, created_at FROM cards WHERE id = $1 and tg_id = $2 LIMIT 1"
+	query := "SELECT id, front, back, created_at FROM cards WHERE id = $1 AND tg_id = $2 LIMIT 1"
 	err = db.QueryRow(query, cardId, tgId).Scan(&card.Id, &card.Front, &card.Back, &card.CreatedAt)
 	if err == sql.ErrNoRows {
 		return card, nil
@@ -86,7 +86,7 @@ func (db *DB) FindCardById(cardId int64, tgId int64) (card Card, err error) {
 	return card, err
 }
 
-func (db *DB) UpdateRepeatIn(repeatId int64, tgId int64, repeatIn int8) (sessionId int64, err error) {
+func (db *DB) UpdateRepeatIn(repeatId int64, tgId int64, repeatIn int64) (sessionId int64, err error) {
 	var cardId int64
 	err = db.QueryRow("UPDATE repeats SET repeat_in = $1 WHERE id = $2 RETURNING card_id, session_id", repeatIn, repeatId).Scan(&cardId, &sessionId)
 	if err == sql.ErrNoRows {
@@ -94,7 +94,7 @@ func (db *DB) UpdateRepeatIn(repeatId int64, tgId int64, repeatIn int8) (session
 	}
 
 	repeatAfter := time.Now().Add(time.Hour * time.Duration(repeatIn))
-	row := db.QueryRow("UPDATE cards SET repeat_after = $1 WHERE tg_id = $2 and id = $3", repeatAfter, tgId, cardId)
+	row := db.QueryRow("UPDATE cards SET repeat_after = $1 WHERE tg_id = $2 AND id = $3", repeatAfter, tgId, cardId)
 	if row.Err() == sql.ErrNoRows {
 		return 0, nil
 	}
